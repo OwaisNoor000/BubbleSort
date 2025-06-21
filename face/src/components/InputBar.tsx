@@ -54,14 +54,6 @@ export default function({disableBtn}:Props) {
             })
     }
 
-    
-    
-    
-
-
-
-    
-
 
     return(
         <div className="w-full flex flex-row justify-center fixed bottom-0">
