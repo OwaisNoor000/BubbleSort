@@ -1,11 +1,13 @@
-import { LuMessageSquare } from "react-icons/lu";
 import {create} from "zustand";
 
+type LLMStatus = "normal" | "generating"
+
 type AppStore = {
-    llmStatus:string,
+    llmStatus:LLMStatus,
     messages:React.ReactNode[]
     appendMessage:(element:React.ReactNode)=>void,
     replaceLastMessage:(element:React.ReactNode)=>void
+    toggleLlmStatus:()=>void;
 }
 
 export const useAppStore = create<AppStore>((set)=>({
@@ -22,5 +24,8 @@ export const useAppStore = create<AppStore>((set)=>({
             llmStatus:state.llmStatus,
             messages:[...state.messages.slice(0,-1),element]
         }));
+    },
+    toggleLlmStatus:()=>{
+        set((state)=>({messages:state.messages,llmStatus:state.llmStatus=="normal"?"generating":"normal"}));
     }
 }));

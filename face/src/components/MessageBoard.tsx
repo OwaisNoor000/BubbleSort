@@ -1,25 +1,21 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import Message from "./Message";
-import Response from "./Response";
-import { AppContext } from "../contexts/MessagesProvider";
+import { useAppStore } from "../contexts/ZustandAppStore";
 
 type MessageBoardProps = {
     children:React.ReactNode,
 }
 
 export default function MessageBoard({children}:MessageBoardProps){
-        const {appData,setAppData} = useContext(AppContext);
-        const [inputText, setInputText] = useState("");
-        const containerBottom = useRef<HTMLDivElement|null>(null);
         
-
+        const messages = useAppStore((state)=>state.messages);
+        const containerBottom = useRef<HTMLDivElement|null>(null);
 
         useEffect(()=>{
             // Scroll to bottom whenever children change
             containerBottom.current?.scrollIntoView({
                 behavior:"smooth"
             });
-        },[appData]);
+        },[messages]);
 
 
     return(
@@ -33,7 +29,7 @@ export default function MessageBoard({children}:MessageBoardProps){
 
                 {/* {children} */}
                 
-                {appData.messages}
+                {messages}
                 <div ref={containerBottom} className=""></div>
                 
         </div>
