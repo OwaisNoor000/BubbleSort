@@ -2,10 +2,11 @@ import { IoIosAttach } from "react-icons/io";
 import { FaArrowUp } from "react-icons/fa";
 import { useContext, useEffect, useRef, useState} from "react";
 import AppDataProvider from "../contexts/AppDataProvider";
-import { AppContext} from "../contexts/AppDataProvider";
+import { AppContext} from "../contexts/MessagesProvider";
 import { io } from 'socket.io-client';
+import Message from "./Message";
+import Response from "./Response";
 
-const socket = new WebSocket("ws://localhost:8000/llm");
 
 
 
@@ -17,120 +18,62 @@ export default function({disableBtn}:Props) {
 
     const {appData,setAppData} = useContext(AppContext);
     const [inputText, setInputText] = useState("");
-    const messagesRef = useRef(appData.messages);
-    
-    useEffect(() => {
-    messagesRef.current = appData.messages;
-    }, [appData.messages]);
-
-    useEffect(() => {
-      socket.addEventListener("open",event=>{
-        console.log("Connection established");
-      });
-
-       
-
-      socket.addEventListener("message", (event) => {
-            const parsed_message = JSON.parse(event.data);
-        
-
-            if(parsed_message.type === "message_segment"){
-              const currentMessages = messagesRef.current;
-              let lastResponse = currentMessages[currentMessages.length-1]
-              if (lastResponse === undefined){
-                console.log("lastResponse undefined");
-                console.log(appData.messages);
-                lastResponse = {
-                  "message":"",
-                  loading:false,
-                  response:true
-                }
-              }
-
-              // Add on the streamed text to the response
-              let newResponse = {
-              "message":lastResponse.message + parsed_message.text,
-              "response":true,
-              "loading":false
-              };
-
-
-              if(lastResponse.loading){
-                newResponse = {
-                "message":parsed_message.text,
-                "response":true,
-                "loading":false
-                };
-              }
-              
-              
-              // Perform a replace operation
-                setAppData(prev => {
-                const updatedMessages = [...prev.messages];
-                updatedMessages[updatedMessages.length - 1] = newResponse;
-
-                return {
-                  ...prev,
-                  llmStatus: "generating",
-                  messages: updatedMessages,
-                };
-              });
-            }else if(parsed_message.type == "message_end"){
-              setAppData(prev => ({
-                ...prev,
-                llmStatus: "normal",
-              }));
-
-            }
-
-            
-          
-
-       });
-
-    }, []);
-
+    const [response,setResponse] = useState([]);
+    const [steps,setSteps] = useState([]);
 
 
     const sendMessage = ()=>{
-        if (inputText!==""){
-            const newMessage = {
-                "message":inputText,
-                "response":false,
-                "loading":false
-            }
 
-            const newResponse = {
-                "message":"",
-                "response":true,
-                "loading":true,
-            }
-            setAppData(prev => ({
+        // This part of the code updates the frontend
+        const newMessage:React.ReactNode = <Message text={inputText}/>;
+        const newResponse:React.ReactNode = <Response text={[""]} steps={[]} waiting={true} reverse={[]}/>;
+        setAppData(prev => ({
+        ...prev,
+        llmStatus:"generating",
+        messages: [...prev.messages, newMessage,newResponse],
+        }));
+        
+        setInputText("");
+
+        // This part of the code gets data from the backend
+        fetch(`http://localhost:8000/sort_verbose`,{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({"data":inputText})
+        })
+            .then(res=>res.json())
+            .then((result)=>{
+               setResponse(result["word"]);
+               setSteps(result["steps"]);
+                const newResponse:React.ReactNode = <Response text={inputText.split("")} reverse={result["word"]} steps={result["steps"]}/>
+                setAppData(prev => ({
                 ...prev,
-                llmStatus: "generating",
-                messages: [...prev.messages, newMessage,newResponse],
-            }));
-            
-setInputText("");
-            
-            socket.send(inputText);
+                llmStatus:"normal",
+                messages: [...prev.messages.slice(0,-1), newResponse],
+                }));
+            })
+    }
 
-            };
-        }
+    
+    
+    
+
+
+
+    
 
 
     return(
         <div className="w-full flex flex-row justify-center fixed bottom-0">
-            <div className="bg-[#2E2E2E] m-10  w-1/2 rounded-3xl">
+            <div className="bg-[#2E2E2E] m-10  w-1/2 rounded-3xl flex flex-row items-center justify-between">
                 <input onChange={(e) => setInputText(e.target.value)} value={inputText}
                 onKeyDown={(e)=>{if(e.key==="Enter" && appData.llmStatus=="normal"){sendMessage()}}}
-                className="placeholder-gray-300 py-4 px-6 outline-none focus:outline-none text-white w-full" type="text" placeholder="Ask Owais Anything"/>
-                <div className="w-full flex flex-row justify-start h-fit relative">
-                    <IoIosAttach className=" left-0 m-5 text-2xl"/>
+                className="placeholder-gray-300 py-4 px-6 outline-none focus:outline-none text-white w-full" type="text" placeholder="Type in a Word to sort"/>
+                <div className="w-full flex flex-row justify-end h-fit relative mr-4">
                         <button
                             onClick={sendMessage}
                             disabled={appData.llmStatus === "generating"}
-                            className={`right-5 top-1/2 absolute bg-[#F5145F] p-2 rounded-full -translate-y-1/2 ${appData.llmStatus === "generating" ? "opacity-50" : ""}`}
+                            className={` bg-[#F5145F] p-2 rounded-full mr-10s  ${appData.llmStatus === "generating" ? "opacity-50" : ""}`}
                             >
                             <FaArrowUp className="text-white" />
                             </button>
