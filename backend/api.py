@@ -1,10 +1,13 @@
 from typing import List
-from fastapi import FastAPI,Request
+from fastapi import FastAPI, Query,Request,HTTPException
+from typing import List, Literal
+from operator import itemgetter
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import uuid
 import os
+import logging
 
 def bubble_sort(word:str,verbose:bool=False)->List[str]:
     arr = list(word)
@@ -62,6 +65,9 @@ def save_users(users):
 def generate_user_id():
     return str(uuid.uuid4())
 
+def chunk_list(lst, n):
+    return [lst[i:i + n] for i in range(0, len(lst), n)]
+
 class SortRequest(BaseModel):
     data: str
     
@@ -92,10 +98,42 @@ async def create_user(request: Request):
     save_users(users)
     return {"message": "User created", "user": user}
 
+
 @app.get("/get_users")
-def get_users():
+def get_users(
+    page: int = Query(0, ge=0),
+    perPage: int = Query(10, ge=0),
+    sort_by: Literal["user_id", "email", "password"] = Query("user_id"),
+    sort_reverse:bool = Query(False)
+):
     users = load_users()
-    return {"users": users}
+    # Sort users by selected field
+    users_sorted = sorted(users, key=itemgetter(sort_by),reverse=sort_reverse)
+
+    pages = chunk_list(users_sorted,perPage)
+    if(page>len(pages)):
+        return {"error":"Page does not exist"}
+
+    requested_page = pages[page-1]
+
+    return {"users": requested_page}
+
+
+@app.get("/get_user/{user_id}")
+def get_user_by_id(user_id: str):
+    users = load_users()
+    for user in users:
+        if user["user_id"] == user_id:
+            return user
+    raise HTTPException(status_code=404, detail="User not found")
+
+
+
+@app.get("/get_users_by_ids")
+def get_users_by_ids(ids: List[str] = Query(...)):
+    users = load_users()
+    matched_users = [user for user in users if user.get("user_id") in ids]
+    return {"users": matched_users}
 
 @app.put("/update_user")
 async def update_user(request: Request):

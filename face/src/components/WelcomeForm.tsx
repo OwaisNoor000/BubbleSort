@@ -1,5 +1,5 @@
 import { MdAdsClick } from "react-icons/md"
-import { PasswordInput } from "../components/ui/password-input";
+import { PasswordInput } from "./ui/password-input";
 import {  useState } from "react";
 import WelcomeFormUserInput from "./WelcomeFormUserInput";
 import { useQuery } from "@tanstack/react-query";

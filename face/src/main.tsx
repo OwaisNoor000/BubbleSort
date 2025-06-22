@@ -5,6 +5,7 @@ import ReactDOM from 'react-dom/client';
 import AppDataProvider, { AppContext } from './contexts/MessagesProvider';
 import AppRoutes from './routes/Route';
 import {QueryClient,QueryClientProvider} from "@tanstack/react-query";
+import { AdminApp } from './pages/Admin';
 
 const queryClient = new QueryClient();
 
@@ -12,7 +13,8 @@ function App() {
 
   return(
         <div >
-          <AppRoutes/>
+          {/* <AppRoutes/> */}
+          <AdminApp/>
         </div>
   )
 }
