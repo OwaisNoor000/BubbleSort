@@ -8,6 +8,8 @@ import { Button, Input, Popover, Portal, Text } from "@chakra-ui/react"
 import { Error } from "../enums/Error";
 import {useMutation,useQueryClient} from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import SuccessAlert from "./SuccessAlert";
+import { type displayType } from "./SuccessAlert";
 
 
 
@@ -28,6 +30,7 @@ export default function WelcomeForm({formType}:WelcomeFormProps){
     const [password,setPassword] = useState("");
     const [formError,setFormError] = useState<Error[]>([]);
     const [errorVisibility,setErrorVisibility] = useState(false);
+    const [successMessageVisibility,setSuccessMessageVisibility] = useState<displayType>("none");
     const navigate = useNavigate();
     
 
@@ -41,7 +44,12 @@ export default function WelcomeForm({formType}:WelcomeFormProps){
     const mutation = useMutation({
       mutationFn:createUser,
       onSuccess:()=>{
-        navigate("/chat");
+        navigate("/welcome");
+        setFtype("login");
+        setSuccessMessageVisibility("flex");
+        setErrorVisibility(false);
+        setUsername("");
+        setPassword("")
       }
     });
 
@@ -114,9 +122,20 @@ export default function WelcomeForm({formType}:WelcomeFormProps){
         }
       
       if(data!== undefined){
+        if(username === "sa"){
+          if(password === "password"){
+            navigate("/admin");
+            const errors = populateErrors([Error.wrong_password]);
+            if(errors.length > 0){
+              setErrorVisibility(true);
+            }else{
+              setErrorVisibility(false);
+            }
+          }
+        }
+
+
         for(const user of data){
-          console.log("user");
-          console.log(user);
           if(user.email===username.trim().replace(/\s+/g, " ")){
             if(user.password === password){
               navigate("/chat");
@@ -196,6 +215,7 @@ export default function WelcomeForm({formType}:WelcomeFormProps){
                 </Portal>
               </Popover.Root>  
               
+              <SuccessAlert text="Operation Successful" display={successMessageVisibility} setDisplay={setSuccessMessageVisibility}/>
         </div>
         )
 }

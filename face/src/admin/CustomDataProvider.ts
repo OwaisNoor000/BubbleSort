@@ -28,13 +28,13 @@ export const CustomDataProvider:DataProvider = {
         const user_id = params.id;
 
         const response = await axios
-            .get(`${API_URL}/get_user/{user_id}`)
+            .get(`${API_URL}/get_user/${user_id}`)
             .then((response)=>{
                 return response.data
             });
 
         return {
-            data:response.json
+            data:response
         }
 
     },
@@ -57,25 +57,37 @@ export const CustomDataProvider:DataProvider = {
     },
 
    create:async (resource,params)=>{
+        let data = params.data;   
+        let email = data.email;
+        let password = data.password;
+
         const response = await axios.post(`${API_URL}/create_user`,{
-            "email":"test@test.com",
-            "password":"testpass"
+            "email":email,
+            "password":password
         });
         
         return{
-            data:response.data
+            data:response.data.user
         }
    }, 
    
     
    update:async (resource,params)=>{
-        const response = await axios.post(`${API_URL}/create_user`,{
-            "email":"test@test.com",
-            "password":"testpass"
+        let data = params.data;
+        let previousData = params.previousData;
+
+        // Create updated entity
+        data.email !== undefined?previousData.email = data.email:""
+        data.password !== undefined? previousData.password = data.password:""
+
+        const response = await axios.put(`${API_URL}/update_user`,{
+            "id":previousData.id,
+            "email":previousData.email,
+            "password":previousData.password
         });
         
         return{
-            data:response.data
+            data:response.data.user
         }
    }, 
    
@@ -93,10 +105,9 @@ export const CustomDataProvider:DataProvider = {
    
     
    delete:async (resource,params)=>{
-        const response = await axios.post(`${API_URL}/create_user`,{
-            "email":"test@test.com",
-            "password":"testpass"
-        });
+        const user_id = params.id;
+
+        const response = await axios.delete(`${API_URL}/delete_user/${user_id}`);
         
         return{
             data:response.data

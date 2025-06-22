@@ -13,8 +13,8 @@ function App() {
 
   return(
         <div >
-          {/* <AppRoutes/> */}
-          <AdminApp/>
+          <AppRoutes/>
+          {/* <AdminApp/> */}
         </div>
   )
 }

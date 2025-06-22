@@ -62,7 +62,7 @@ def save_users(users):
             f.write(json.dumps(user) + "\n")
 
 # Generate a new user ID
-def generate_user_id():
+def generate_id():
     return str(uuid.uuid4())
 
 def chunk_list(lst, n):
@@ -89,7 +89,7 @@ async def create_user(request: Request):
     users = load_users()
 
     user = {
-        "user_id": generate_user_id(),
+        "id": generate_id(),
         "email": data.get("email"),
         "password": data.get("password")
     }
@@ -103,7 +103,7 @@ async def create_user(request: Request):
 def get_users(
     page: int = Query(0, ge=0),
     perPage: int = Query(10, ge=0),
-    sort_by: Literal["user_id", "email", "password"] = Query("user_id"),
+    sort_by: Literal["id", "email", "password"] = Query("id"),
     sort_reverse:bool = Query(False)
 ):
     users = load_users()
@@ -119,11 +119,11 @@ def get_users(
     return {"users": requested_page}
 
 
-@app.get("/get_user/{user_id}")
-def get_user_by_id(user_id: str):
+@app.get("/get_user/{id}")
+def get_user_by_id(id: str):
     users = load_users()
     for user in users:
-        if user["user_id"] == user_id:
+        if user["id"] == id:
             return user
     raise HTTPException(status_code=404, detail="User not found")
 
@@ -132,17 +132,17 @@ def get_user_by_id(user_id: str):
 @app.get("/get_users_by_ids")
 def get_users_by_ids(ids: List[str] = Query(...)):
     users = load_users()
-    matched_users = [user for user in users if user.get("user_id") in ids]
+    matched_users = [user for user in users if user.get("id") in ids]
     return {"users": matched_users}
 
 @app.put("/update_user")
 async def update_user(request: Request):
     data = await request.json()
-    user_id = data.get("user_id")
+    id = data.get("id")
 
     users = load_users()
     for user in users:
-        if user["user_id"] == user_id:
+        if user["id"] == id:
             user["email"] = data.get("email", user["email"])
             user["password"] = data.get("password", user["password"])
             save_users(users)
@@ -150,16 +150,16 @@ async def update_user(request: Request):
 
     return {"error": "User not found"}
 
-@app.delete("/delete_user")
-async def delete_user(request: Request):
-    data = await request.json()
-    user_id = data.get("user_id")
 
+
+@app.delete("/delete_user/{id}")
+def delete_user(id: str):
     users = load_users()
-    new_users = [u for u in users if u["user_id"] != user_id]
+    new_users = [u for u in users if u["id"] != id]
 
     if len(new_users) == len(users):
         return {"error": "User not found"}
 
     save_users(new_users)
     return {"message": "User deleted"}
+

@@ -29,6 +29,7 @@ export default function LegoBlocks({letters,steps,reverse}:LegoBlocksProps){
 
       let current = [...positions]
       const shuffleList = async() => {
+          await delay(500)
         for(const step of steps){
           const copy = [...current]
           let temp:number = copy[step[0]];
