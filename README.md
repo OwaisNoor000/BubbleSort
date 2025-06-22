@@ -84,5 +84,3 @@ users.txt     → Acts as a flat-file database
 ---
 
 Feel free to clone, explore, and contribute!
-
-Let me know if you'd like me to add badges, licensing, or contribution guidelines too.
